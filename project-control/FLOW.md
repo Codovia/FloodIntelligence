@@ -1,0 +1,36 @@
+# Project Flow
+
+## Development Flow
+
+REQUEST
+-> READ CONTEXT
+-> PLAN
+-> IMPLEMENT SMALL CHANGE
+-> TEST
+-> REVIEW DIFF
+-> VERIFY
+-> UPDATE DOCUMENTATION
+-> COMMIT
+-> HANDOFF
+
+## Data Flow
+
+REAL SOURCE
+-> SOURCE ADAPTER
+-> RAW DATA
+-> VALIDATION
+-> NORMALIZATION
+-> POSTGRESQL / POSTGIS
+-> FEATURE ENGINEERING
+-> LEAKAGE-SAFE ML DATASET
+-> MODEL
+-> PREDICTION
+-> DASHBOARD / ALERTS
+
+## Important Separation
+
+Official warnings
+and
+AI predictions
+
+must remain separate system objects.
