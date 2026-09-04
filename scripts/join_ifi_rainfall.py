@@ -23,8 +23,12 @@ def perform_join():
     df['End Date'] = pd.to_datetime(df['End Date'], dayfirst=True, errors='coerce')
     
     # Filter to events where we have downloaded IMD data
-    downloaded_files = [f for f in os.listdir('data/raw/rainfall_imd') if f.endswith('.grd')]
-    cached_years = sorted([int(f.split('_')[1].split('.')[0]) for f in downloaded_files])
+    download_dir = 'data/raw/rainfall_imd/rain'
+    if os.path.exists(download_dir):
+        downloaded_files = [f for f in os.listdir(download_dir) if f.endswith('.grd')]
+    else:
+        downloaded_files = []
+    cached_years = sorted([int(f.split('.')[0]) for f in downloaded_files])
     
     has_cached = df['Start Date'].dt.year.isin(cached_years)
     df_cached = df[has_cached].copy()
