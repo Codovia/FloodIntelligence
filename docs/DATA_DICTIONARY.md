@@ -22,4 +22,18 @@
 | `rain_7d` | Float | Sum of daily rainfall for the 7-day window ending on the `Start Date`. | $\sum_{i=0}^{6} R(t-i)$ |
 | `rain_lag_1d` | Float | Daily rainfall on the day immediately preceding the `Start Date`. | $R(t-1)$ |
 
-*(Note: Rainfall amounts are spatially averaged over a bounding box approximation for Karnataka. In production, this should use exact district geometry masking.)*
+## District-Level Training Candidates
+*Path: `data/interim/district_training_candidates.csv`*
+
+| Column | Data Type | Description |
+|---|---|---|
+| `District` | String | Standardized district name. |
+| `Date` | DateTime | The specific day (representing the 'district x day' temporal unit). |
+| `label` | Integer (0/1) | Target variable. 1 if the district was identified in an IFI flood event for this day. 0 if not identified. |
+| `rain_1d` | Float | IMD rainfall on `Date` |
+| `rain_3d` | Float | 3-day rolling sum of IMD rainfall |
+| `rain_7d` | Float | 7-day rolling sum of IMD rainfall |
+| `rain_lag_1d` | Float | IMD rainfall on `Date - 1` |
+| `mean_elevation` | Float | (Pending) District mean elevation |
+| `mean_slope` | Float | (Pending) District mean slope |
+| `distance_to_major_river` | Float | (Pending) Distance to nearest major river |

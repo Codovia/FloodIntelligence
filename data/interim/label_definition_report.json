@@ -1,0 +1,9 @@
+{
+    "Final spatial unit": "District polygon",
+    "Final temporal unit": "Day",
+    "Positive-label definition": "label = 1 if the district is identified as affected by an IFI flood event that overlaps with the given day.",
+    "Negative-label definition": "label = 0 if the district is not identified as affected in the available IFI inventory for the given day. Limitation: This means 'not identified', rather than 'confirmed no flood'.",
+    "Number of positive observations": 5191,
+    "Number of candidate negatives": 38639,
+    "Class balance": "11.8435%"
+}

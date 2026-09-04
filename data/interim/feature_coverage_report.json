@@ -1,0 +1,9 @@
+{
+    "Rainfall feature coverage (rain_1d)": 43830,
+    "Rainfall feature coverage (rain_7d)": 43830,
+    "Static feature coverage (mean_elevation)": 0,
+    "Static feature coverage (mean_slope)": 0,
+    "Missing-data problems": "Static topological features (elevation, slope, river proximity) have 0 coverage because we lack a DEM dataset. Need SRTM or equivalent download.",
+    "Remaining methodological risks": "Heavy class imbalance due to 'district x day' granularity. Many '0' labels might be unreported minor floods.",
+    "Recommended next step": "Download SRTM DEM data to calculate topological features, and apply undersampling/SMOTE or class weights during model training."
+}
