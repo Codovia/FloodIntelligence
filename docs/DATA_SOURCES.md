@@ -8,5 +8,5 @@
 - **Resolution**: Point/Event-level geometry
 - **Purpose**: Historical flood events for training ML models
 - **Retrieval date**: 2026-09-04
-- **Processing notes**: Needs extraction for Karnataka and intersecting with modelling grid.
-- **Limitations**: Points or polygons may be coarse, reporting biases might exist.
+- **Processing notes**: Dataset contains 6876 historical events across India. Extracted 494 flood events explicitly impacting Karnataka to `data/interim/karnataka_flood_events.csv`. The coverage spans from 1969-07-15 to 2023-07-25.
+- **Limitations**: Points or polygons may be coarse, reporting biases might exist. Spatial representation is available via Latitude/Longitude and District codes.
