@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+
+# FloodPulse raw/intermediate/generated data
+data/raw/**
+data/interim/**
+data/processed/**
+data/cache/**
+
+# ML artifacts
+ml/artifacts/
+*.joblib
+*.pkl
+
+# Logs / temporary files
+*.log
+*.tmp
+.DS_Store
