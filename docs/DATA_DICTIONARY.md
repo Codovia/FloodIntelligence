@@ -17,6 +17,10 @@
 Missing values must remain explicit and be handled by a documented pipeline
 decision. They must never be silently filled.
 
+The rainfall transformer requires one real aggregated observation per
+`district_id` and `observation_date`. It emits only dates with a complete
+seven-day history; missing history is an error, not an imputation opportunity.
+
 ## Label construction
 
 The pipeline takes candidate district-days from observed rainfall coverage and

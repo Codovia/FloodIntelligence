@@ -40,6 +40,9 @@ floodpulse-build-labels \
   --events data/raw/ifi/events.csv \
   --candidates data/interim/candidate_district_days.csv \
   --output data/processed/district_day_labels.csv
+floodpulse-build-rainfall-features \
+  --input data/interim/district_daily_rainfall.csv \
+  --output data/processed/rainfall_features.csv
 ```
 
 The check fails until the required real inputs exist:
@@ -54,6 +57,10 @@ data/raw/dem/srtm.tif
 The label command expects `candidate_district_days.csv` to be derived from
 observed rainfall coverage and containing `district_id,event_date`. It refuses
 duplicates, malformed dates, empty event inventories, and missing columns.
+
+The rainfall command expects real, already spatially aggregated observations
+with columns `district_id,observation_date,rainfall_mm`. It refuses duplicate
+days, negative values, malformed dates, and incomplete seven-day histories.
 
 Raw and generated data are intentionally ignored by Git. See
 [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) before adding any source.
