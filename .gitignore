@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Raw, interim, and generated data (never commit project datasets)
+data/raw/
+data/interim/
+data/processed/
+data/external/
+models/
+reports/generated/
+
+# Tooling
+.DS_Store
+.coverage
+htmlcov/
+
