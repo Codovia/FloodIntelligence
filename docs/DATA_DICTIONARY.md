@@ -17,3 +17,10 @@
 Missing values must remain explicit and be handled by a documented pipeline
 decision. They must never be silently filled.
 
+## Label construction
+
+The pipeline takes candidate district-days from observed rainfall coverage and
+marks `label = 1` when the same `district_id` and `event_date` occur in the
+verified IFI event extract. It does not generate a calendar of negatives.
+Duplicate candidates, missing identifiers, invalid dates, and empty event files
+fail the pipeline.

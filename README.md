@@ -7,10 +7,10 @@ integration.
 
 ## Current status
 
-This repository currently contains the project foundation and a strict data
-readiness check. No observations, shelters, model metrics, or predictions are
-included. Real datasets must be acquired and their provenance recorded before
-training.
+This repository contains the project foundation, strict data readiness checks,
+and the first label-construction component. No observations, shelters, model
+metrics, or predictions are included. Real datasets must be acquired and their
+provenance recorded before training.
 
 The working research target is:
 
@@ -36,6 +36,10 @@ python -m venv .venv
 . .venv/bin/activate
 pip install -e .
 floodpulse-check-data --data-root data
+floodpulse-build-labels \
+  --events data/raw/ifi/events.csv \
+  --candidates data/interim/candidate_district_days.csv \
+  --output data/processed/district_day_labels.csv
 ```
 
 The check fails until the required real inputs exist:
@@ -46,6 +50,10 @@ data/raw/rainfall_imd/daily_gridded.csv
 data/raw/boundaries/karnataka_districts.geojson
 data/raw/dem/srtm.tif
 ```
+
+The label command expects `candidate_district_days.csv` to be derived from
+observed rainfall coverage and containing `district_id,event_date`. It refuses
+duplicates, malformed dates, empty event inventories, and missing columns.
 
 Raw and generated data are intentionally ignored by Git. See
 [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) before adding any source.
@@ -58,4 +66,3 @@ Raw and generated data are intentionally ignored by Git. See
   acceptable for the primary result.
 - Model output must remain separate from official government warnings.
 - Only verified and admin-activated shelters can be citizen-facing.
-

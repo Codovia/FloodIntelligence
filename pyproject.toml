@@ -11,7 +11,7 @@ dependencies = []
 
 [project.scripts]
 floodpulse-check-data = "floodpulse.data_contracts:main"
+floodpulse-build-labels = "floodpulse.labels:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
