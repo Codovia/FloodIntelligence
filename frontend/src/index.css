@@ -1,20 +1,25 @@
 @import "leaflet/dist/leaflet.css";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-glass: rgba(30, 41, 59, 0.7);
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --accent-cyan: #06b6d4;
+  --bg-primary: #060d1a;
+  --bg-secondary: #0d1a2d;
+  --bg-card: rgba(13, 26, 45, 0.85);
+  --bg-glass: rgba(6, 13, 26, 0.88);
+  --text-primary: #e8f4fd;
+  --text-secondary: #7fb3d3;
+  --text-muted: #4a7a9b;
+  --accent-cyan: #00d4ff;
   --accent-blue: #3b82f6;
-  --alert-red: #ef4444;
-  --alert-orange: #f59e0b;
-  --success-green: #10b981;
-  --border-color: rgba(255, 255, 255, 0.1);
-  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  --border-radius: 16px;
+  --accent-purple: #8b5cf6;
+  --alert-red: #ff4757;
+  --alert-orange: #ffa502;
+  --success-green: #2ed573;
+  --border-color: rgba(0, 212, 255, 0.15);
+  --border-hover: rgba(0, 212, 255, 0.4);
+  --shadow-glow: 0 0 30px rgba(0, 212, 255, 0.1);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --panel-width: 420px;
 }
 
 * {
@@ -27,18 +32,22 @@
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  overflow: hidden; /* Prevent scrolling for the full-screen dashboard */
+  overflow: hidden;
 }
 
-/* Dashboard Layout */
+/* ============================
+   DASHBOARD LAYOUT
+   ============================ */
 .dashboard-container {
   display: flex;
   height: 100vh;
   width: 100vw;
-  position: relative;
+  background: var(--bg-primary);
 }
 
-/* Map Container */
+/* ============================
+   MAP
+   ============================ */
 .map-wrapper {
   flex-grow: 1;
   height: 100%;
@@ -49,152 +58,394 @@ body {
 .leaflet-container {
   height: 100%;
   width: 100%;
-  background: var(--bg-primary); /* Dark map background */
+  background: #060d1a;
 }
 
-/* Glassmorphism Panel */
-.side-panel {
-  width: 400px;
-  background: var(--bg-glass);
+/* Themed tooltips */
+.leaflet-tooltip {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13px !important;
+  box-shadow: var(--shadow-card) !important;
+}
+.leaflet-tooltip-top::before {
+  border-top-color: var(--border-color) !important;
+}
+
+/* ============================
+   TOP HEADER BAR (floating over map)
+   ============================ */
+.map-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: linear-gradient(180deg, rgba(6, 13, 26, 0.97) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.4); }
+  50%       { box-shadow: 0 0 40px rgba(0, 212, 255, 0.9); }
+}
+
+.brand-text h1 {
+  font-size: 22px;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.brand-text p {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.header-stats {
+  display: flex;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.stat-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 30px;
+  padding: 7px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(12px);
+}
+
+.stat-pill .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  animation: blink 2s step-end infinite;
+}
+
+.stat-pill .dot.red    { background: var(--alert-red); }
+.stat-pill .dot.green  { background: var(--success-green); }
+.stat-pill .dot.orange { background: var(--alert-orange); }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
+.stat-pill span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* ============================
+   RISK LEGEND
+   ============================ */
+.risk-legend {
+  position: absolute;
+  bottom: 32px;
+  left: 24px;
+  z-index: 1000;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 18px;
   backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-card);
+}
+
+.risk-legend h4 {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.legend-bar {
+  width: 160px;
+  height: 7px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #2ed573, #ffa502, #ff4757);
+  margin-bottom: 6px;
+}
+
+.legend-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ============================
+   SIDE PANEL
+   ============================ */
+.side-panel {
+  width: var(--panel-width);
+  height: 100%;
+  background: var(--bg-glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-left: 1px solid var(--border-color);
-  box-shadow: var(--shadow-glass);
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.5);
   z-index: 10;
   display: flex;
   flex-direction: column;
-  padding: 24px;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
-/* Typography */
-h1 {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  background: -webkit-linear-gradient(45deg, var(--accent-cyan), var(--accent-blue));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-h2 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: var(--text-primary);
+.panel-header {
+  padding: 24px 24px 20px;
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
+  background: linear-gradient(180deg, rgba(0, 212, 255, 0.05) 0%, transparent 100%);
+  flex-shrink: 0;
 }
 
-p {
-  font-size: 14px;
-  color: var(--text-secondary);
-  line-height: 1.5;
+.panel-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
 }
 
-/* Shelter Cards */
-.shelter-card {
-  background: rgba(255, 255, 255, 0.03);
+.panel-header p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.panel-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.summary-stat {
+  text-align: center;
+  padding: 10px 6px;
+  background: rgba(255,255,255,0.03);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 10px;
+}
+
+.summary-stat .value {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.summary-stat .label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.value.active-val    { color: var(--success-green); }
+.value.full-val      { color: var(--alert-red); }
+.value.candidate-val { color: var(--alert-orange); }
+
+/* ============================
+   SHELTER CARDS
+   ============================ */
+.shelters-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 16px 20px 8px;
+}
+
+.shelter-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 12px;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.shelter-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
 }
 
 .shelter-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-glow);
 }
+
+.shelter-card:hover::before { opacity: 1; }
+
+.shelter-card.status-active    { border-left: 3px solid var(--success-green); }
+.shelter-card.status-full      { border-left: 3px solid var(--alert-red); }
+.shelter-card.status-candidate { border-left: 3px solid var(--alert-orange); }
 
 .shelter-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 12px;
 }
 
+.shelter-meta { flex: 1; min-width: 0; }
+
 .shelter-name {
+  font-size: 14px;
   font-weight: 600;
-  font-size: 16px;
   color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.shelter-location {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .badge {
-  padding: 4px 10px;
+  padding: 4px 9px;
   border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
-.badge.active { background: rgba(16, 185, 129, 0.2); color: var(--success-green); }
-.badge.candidate { background: rgba(245, 158, 11, 0.2); color: var(--alert-orange); }
-.badge.full { background: rgba(239, 68, 68, 0.2); color: var(--alert-red); }
+.badge.active    { background: rgba(46, 213, 115, 0.15); color: var(--success-green); border: 1px solid rgba(46,213,115,0.35); }
+.badge.candidate { background: rgba(255, 165,  2, 0.15); color: var(--alert-orange);  border: 1px solid rgba(255,165,2,0.35); }
+.badge.full      { background: rgba(255,  71, 87, 0.15); color: var(--alert-red);     border: 1px solid rgba(255,71,87,0.35); }
 
-/* Progress Bar for Occupancy */
+.shelter-occupancy-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+  font-size: 12px;
+}
+
+.occupancy-label { color: var(--text-muted); }
+.occupancy-value { color: var(--text-secondary); font-weight: 600; }
+
 .progress-bar-bg {
-  background: rgba(255, 255, 255, 0.1);
-  height: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  height: 5px;
   border-radius: 3px;
-  margin-top: 8px;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
   border-radius: 3px;
-  transition: width 0.3s ease;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
 }
 
-/* Buttons */
+.progress-bar-fill.danger {
+  background: linear-gradient(90deg, var(--alert-orange), var(--alert-red));
+}
+
 .btn {
-  background: linear-gradient(45deg, var(--accent-blue), var(--accent-cyan));
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
   color: white;
   border: none;
-  padding: 10px 16px;
+  padding: 9px 16px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
   width: 100%;
   margin-top: 12px;
+  letter-spacing: 0.3px;
+  position: relative;
+  overflow: hidden;
 }
 
-.btn:hover {
-  opacity: 0.9;
+.btn:hover { opacity: 0.88; }
+.btn:active { transform: scale(0.98); }
+
+/* ============================
+   PANEL FOOTER
+   ============================ */
+.panel-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+.footer-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.6;
 }
 
-/* Floating overlay for map stats */
-.map-overlay {
-  position: absolute;
-  top: 24px;
-  left: 24px;
-  background: var(--bg-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-color);
-  padding: 16px 24px;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-glass);
-  z-index: 1000; /* Above leaflet */
+.footer-note strong { color: var(--accent-cyan); }
+
+/* ============================
+   SCROLLBAR
+   ============================ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,212,255,0.4); }
+
+/* ============================
+   DARK MAP TILE FILTER
+   ============================ */
+.leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(0.7) contrast(0.9) saturate(0.5);
 }
