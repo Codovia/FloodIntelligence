@@ -1,0 +1,25 @@
+# Data directories (do not commit raw or processed datasets)
+data/
+!data/.gitkeep
+
+# Python environments and cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# IDEs and OS files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+# API Keys and Environment Variables
+.env
+.env.local
