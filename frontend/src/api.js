@@ -4,7 +4,7 @@
  */
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:8001/api';
+const API_BASE = '/api';
 
 const api = axios.create({
   baseURL: API_BASE,
