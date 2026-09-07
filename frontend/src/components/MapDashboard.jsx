@@ -1,80 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, GeoJSON, ZoomControl } from 'react-leaflet';
+import React, { useEffect, useState, useCallback } from 'react';
+import { MapContainer, TileLayer, GeoJSON, ZoomControl, CircleMarker, Popup } from 'react-leaflet';
+import { fetchMapRisk, fetchShelters } from '../api';
 
-// Free OSM tiles with a dark, desaturated look — no API key needed
 const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-
-// Karnataka districts with sample risk probabilities
-const DISTRICT_GEOJSON = {
-  type: "FeatureCollection",
-  features: [
-    {
-      type: "Feature",
-      properties: { name: "Uttara Kannada", district: "Coastal", flood_probability: 0.91 },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[[74.1,14.2],[75.2,14.2],[75.2,15.2],[74.1,15.2],[74.1,14.2]]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: { name: "Udupi", district: "Coastal", flood_probability: 0.82 },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[[74.5,13.3],[75.1,13.3],[75.1,13.9],[74.5,13.9],[74.5,13.3]]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: { name: "Dakshina Kannada", district: "Coastal", flood_probability: 0.78 },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[[74.7,12.6],[75.4,12.6],[75.4,13.2],[74.7,13.2],[74.7,12.6]]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: { name: "Kodagu", district: "Malnad", flood_probability: 0.65 },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[[75.5,12.2],[76.2,12.2],[76.2,12.8],[75.5,12.8],[75.5,12.2]]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: { name: "Belagavi", district: "North", flood_probability: 0.54 },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[[74.4,15.5],[75.6,15.5],[75.6,16.5],[74.4,16.5],[74.4,15.5]]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: { name: "Bengaluru Urban", district: "South", flood_probability: 0.35 },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[[77.4,12.8],[77.8,12.8],[77.8,13.2],[77.4,13.2],[77.4,12.8]]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: { name: "Mysuru", district: "South", flood_probability: 0.18 },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[[76.3,11.9],[76.9,11.9],[76.9,12.5],[76.3,12.5],[76.3,11.9]]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: { name: "Kalaburagi", district: "Hyderabad-Karnataka", flood_probability: 0.12 },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[[76.5,17.0],[77.7,17.0],[77.7,17.8],[76.5,17.8],[76.5,17.0]]]
-      }
-    }
-  ]
-};
+const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 function getRiskColor(prob) {
   if (prob > 0.75) return '#ff4757';
@@ -90,45 +19,91 @@ function getRiskLabel(prob) {
   return 'LOW';
 }
 
-export default function MapDashboard() {
+export default function MapDashboard({ onDistrictClick }) {
+  const [geojson, setGeojson] = useState(null);
+  const [shelters, setShelters] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [stats, setStats] = useState({ critical: 0, high: 0, total: 0 });
+  const [showShelters, setShowShelters] = useState(true);
+
+  const loadData = useCallback(() => {
+    setLoading(true);
+    Promise.all([
+      fetchMapRisk(),
+      fetchShelters(),
+    ])
+      .then(([geo, shlt]) => {
+        setGeojson(geo);
+        setShelters(shlt);
+
+        const features = geo?.features || [];
+        const critical = features.filter(f => (f.properties?.flood_probability || 0) > 0.75).length;
+        const high = features.filter(f => {
+          const p = f.properties?.flood_probability || 0;
+          return p > 0.5 && p <= 0.75;
+        }).length;
+        setStats({ critical, high, total: features.length });
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 180000); // refresh every 3 min
+    return () => clearInterval(interval);
+  }, [loadData]);
+
   const getStyle = (feature) => ({
-    fillColor: getRiskColor(feature.properties.flood_probability),
+    fillColor: getRiskColor(feature.properties?.flood_probability || 0),
     weight: 1.5,
     opacity: 0.9,
     color: 'rgba(255,255,255,0.25)',
-    fillOpacity: 0.55
+    fillOpacity: 0.55,
   });
 
   const onEachFeature = (feature, layer) => {
-    const { name, flood_probability } = feature.properties;
-    const pct = Math.round(flood_probability * 100);
-    const label = getRiskLabel(flood_probability);
-    const color = getRiskColor(flood_probability);
+    const { name, flood_probability, risk_level, main_factors } = feature.properties || {};
+    const pct = Math.round((flood_probability || 0) * 100);
+    const label = getRiskLabel(flood_probability || 0);
+    const color = getRiskColor(flood_probability || 0);
 
     layer.bindTooltip(`
-      <div style="min-width:140px">
-        <div style="font-weight:700;font-size:14px;margin-bottom:6px">${name}</div>
+      <div style="min-width:160px">
+        <div style="font-weight:700;font-size:14px;margin-bottom:6px">${name || 'Unknown'}</div>
         <div style="display:flex;align-items:center;gap:8px">
           <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>
           <span style="font-size:12px;color:#7fb3d3">Risk: </span>
           <span style="font-size:12px;font-weight:700;color:${color}">${label} (${pct}%)</span>
         </div>
+        ${main_factors?.length ? `<div style="font-size:11px;color:#4a7a9b;margin-top:6px">${main_factors.slice(0, 2).join(' · ')}</div>` : ''}
+        <div style="font-size:10px;color:#4a7a9b;margin-top:4px">Click for details →</div>
       </div>
     `, { sticky: true });
 
     layer.on({
-      mouseover: (e) => {
-        e.target.setStyle({ fillOpacity: 0.8, weight: 2.5, color: 'rgba(255,255,255,0.7)' });
-      },
-      mouseout: (e) => {
-        e.target.setStyle({ fillOpacity: 0.55, weight: 1.5, color: 'rgba(255,255,255,0.25)' });
-      }
+      mouseover: (e) => e.target.setStyle({ fillOpacity: 0.8, weight: 2.5, color: 'rgba(255,255,255,0.7)' }),
+      mouseout: (e) => e.target.setStyle({ fillOpacity: 0.55, weight: 1.5, color: 'rgba(255,255,255,0.25)' }),
+      click: () => onDistrictClick && onDistrictClick(name),
     });
   };
 
-  // Count by risk
-  const critical = DISTRICT_GEOJSON.features.filter(f => f.properties.flood_probability > 0.75).length;
-  const high     = DISTRICT_GEOJSON.features.filter(f => f.properties.flood_probability > 0.5 && f.properties.flood_probability <= 0.75).length;
+  if (error) {
+    return (
+      <div className="map-wrapper">
+        <div className="map-error-overlay">
+          <span className="error-icon">⚠️</span>
+          <h3>Failed to load map data</h3>
+          <p>{error}</p>
+          <button className="btn" onClick={loadData}>Retry</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="map-wrapper">
@@ -144,16 +119,22 @@ export default function MapDashboard() {
         <div className="header-stats">
           <div className="stat-pill">
             <div className="dot red"></div>
-            <span>{critical} Critical Districts</span>
+            <span>{stats.critical} Critical</span>
           </div>
           <div className="stat-pill">
             <div className="dot orange"></div>
-            <span>{high} High Risk</span>
+            <span>{stats.high} High Risk</span>
           </div>
           <div className="stat-pill">
             <div className="dot green"></div>
-            <span>Live · Updated Now</span>
+            <span>{loading ? 'Loading...' : 'Live · Updated Now'}</span>
           </div>
+          <button
+            className={`stat-pill toggle-pill ${showShelters ? 'active' : ''}`}
+            onClick={() => setShowShelters(!showShelters)}
+          >
+            <span>⛺ {showShelters ? 'Hide' : 'Show'} Shelters</span>
+          </button>
         </div>
       </div>
 
@@ -175,16 +156,40 @@ export default function MapDashboard() {
         style={{ height: "100%", width: "100%" }}
       >
         <ZoomControl position="bottomright" />
-        <TileLayer
-          url={TILE_URL}
-          attribution={TILE_ATTRIBUTION}
-          className="dark-tiles"
-        />
-        <GeoJSON
-          data={DISTRICT_GEOJSON}
-          style={getStyle}
-          onEachFeature={onEachFeature}
-        />
+        <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} className="dark-tiles" />
+        {geojson && (
+          <GeoJSON
+            key={JSON.stringify(geojson).slice(0, 100)}
+            data={geojson}
+            style={getStyle}
+            onEachFeature={onEachFeature}
+          />
+        )}
+
+        {/* Shelter markers */}
+        {showShelters && shelters.map(s => (
+          s.lat && s.lon && (
+            <CircleMarker
+              key={s.id}
+              center={[s.lat, s.lon]}
+              radius={6}
+              pathOptions={{
+                color: s.status === 'ACTIVE' ? '#2ed573' : s.status === 'FULL' ? '#ff4757' : '#ffa502',
+                fillColor: s.status === 'ACTIVE' ? '#2ed573' : s.status === 'FULL' ? '#ff4757' : '#ffa502',
+                fillOpacity: 0.8,
+                weight: 2,
+              }}
+            >
+              <Popup>
+                <div style={{ fontFamily: 'Inter, sans-serif', color: '#1a1a2e' }}>
+                  <strong>{s.name}</strong><br />
+                  <span style={{ fontSize: '12px' }}>📍 {s.district} · {s.locality}</span><br />
+                  <span style={{ fontSize: '12px' }}>Capacity: {s.capacity} · Status: {s.status}</span>
+                </div>
+              </Popup>
+            </CircleMarker>
+          )
+        ))}
       </MapContainer>
     </div>
   );
