@@ -24,6 +24,7 @@ from .src.drainage_risk import drainage_level, reservoir_status
 from .src.alert_system import run_alert_check
 from .src.notifier import format_telegram_alert, send_telegram
 from .src.telegram_bot import FloodPulseBot
+from .src.schemas import SubscriberCreate, PredictionInput
 from .src import data_loader
 
 # ── Module-level globals ────────────────────────────
@@ -112,7 +113,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:5174"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -265,25 +266,26 @@ def rainfall_history(district: str = None):
 
 # ── Prediction ──────────────────────────────────────
 @app.post("/api/predict/flood")
-def predict_manual(payload: dict):
+def predict_manual(payload: PredictionInput):
     if not MODEL_ARTIFACT:
         raise HTTPException(503, "Model not loaded")
     
-    district = payload.get("district")
+    data = payload.model_dump()
+    district = data.get("district")
     if district and district not in KARNATAKA_DISTRICTS:
         raise HTTPException(404, f"District '{district}' not found")
     
     # Merge with district profile
     profile = KARNATAKA_DISTRICTS.get(district, {})
     for key in ["distance_to_river_km", "elevation_m", "slope", "past_flood_count"]:
-        if key not in payload:
-            payload[key] = profile.get(key, 0)
-    if "taluk" not in payload:
-        payload["taluk"] = f"{district}_Central"
+        if key not in data or data[key] is None:
+            data[key] = profile.get(key, 0)
+    if "taluk" not in data:
+        data["taluk"] = f"{district}_Central"
     
-    prediction = predict_flood_risk(MODEL_ARTIFACT, payload)
+    prediction = predict_flood_risk(MODEL_ARTIFACT, data)
     prediction["mode"] = "manual"
-    prediction["input_snapshot"] = payload
+    prediction["input_snapshot"] = data
     return prediction
 
 @app.get("/api/predict/flood/auto")
@@ -410,11 +412,12 @@ def list_localities(district: str = None):
 
 # ── Subscriptions ───────────────────────────────────
 @app.post("/api/subscribe", status_code=201)
-def create_subscriber(payload: dict):
+def create_subscriber(payload: SubscriberCreate):
     try:
+        data = payload.model_dump()
         return database.subscriber_create(
-            payload["contact_method"], payload["contact_value"],
-            payload["district"], payload.get("locality", "district_wide")
+            data["contact_method"], data["contact_value"],
+            data["district"], data.get("locality", "district_wide")
         )
     except Exception as e:
         if "UNIQUE" in str(e) or "unique" in str(e).lower():
@@ -492,3 +495,39 @@ def update_shelter_status(shelter_id: int, payload: dict):
     if not result:
         raise HTTPException(404, "Shelter not found")
     return result
+
+
+# ── Dashboard Stats ─────────────────────────────────
+@app.get("/api/dashboard/stats")
+def dashboard_stats():
+    """Aggregated overview for the frontend dashboard."""
+    results = _live_district_summary()
+    shelters = database.shelter_list()
+    alerts = database.alert_event_list(limit=20)
+    
+    high = sum(1 for r in results if r.get("risk_level") == "High")
+    medium = sum(1 for r in results if r.get("risk_level") == "Medium")
+    low = sum(1 for r in results if r.get("risk_level") == "Low")
+    
+    active_shelters = sum(1 for s in shelters if s.get("status") == "ACTIVE")
+    total_capacity = sum(s.get("capacity", 0) for s in shelters)
+    
+    # Find top 5 riskiest districts
+    top_risk = [
+        {"district": r["district"], "probability": r.get("flood_probability", 0), "risk_level": r.get("risk_level", "Low")}
+        for r in results[:5]
+    ]
+    
+    return {
+        "total_districts": len(KARNATAKA_DISTRICTS),
+        "high_risk": high,
+        "medium_risk": medium,
+        "low_risk": low,
+        "model_loaded": MODEL_ARTIFACT is not None,
+        "model_version": MODEL_ARTIFACT.get("version") if MODEL_ARTIFACT else None,
+        "active_shelters": active_shelters,
+        "total_shelters": len(shelters),
+        "total_shelter_capacity": total_capacity,
+        "recent_alerts": alerts[:10],
+        "top_risk_districts": top_risk,
+    }

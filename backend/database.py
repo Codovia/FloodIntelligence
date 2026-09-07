@@ -13,7 +13,7 @@ load_dotenv()
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql://floodpulse:floodpulse@localhost:5432/floodpulse"
+    "postgresql://postgres:password@localhost:5432/floodpulse"
 )
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)

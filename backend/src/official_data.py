@@ -145,20 +145,27 @@ def _expand_flood_events(ifi_df: pd.DataFrame) -> dict:
             continue
         
         try:
-            start = pd.to_datetime(row[date_cols[0]])
+            start = pd.to_datetime(row[date_cols[0]], dayfirst=True)
+            if pd.isna(start):
+                continue
         except:
             continue
         
         if end_cols:
             try:
-                end = pd.to_datetime(row[end_cols[0]])
+                end = pd.to_datetime(row[end_cols[0]], dayfirst=True)
+                if pd.isna(end):
+                    end = start + timedelta(days=3)
             except:
                 end = start + timedelta(days=3)
         else:
             end = start + timedelta(days=3)
         
-        # Cap at 21 days
-        duration = min((end - start).days + 1, 21)
+        # Cap at 21 days, handle negative durations
+        raw_duration = (end - start).days + 1
+        if pd.isna(raw_duration) or raw_duration <= 0:
+            raw_duration = 3
+        duration = int(min(raw_duration, 21))
         for d in range(duration):
             day = start + timedelta(days=d)
             flood_days[(district, day.strftime("%Y-%m-%d"))] = True
